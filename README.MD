@@ -207,9 +207,6 @@ ORDER BY cnt DESC;
 - **Streaming pipeline harus dijalankan manual** (dua proses terpisah, dua virtual environment) — tidak diorkestrasi Airflow sama sekali. Tidak ada log persisten untuk run publisher/Beam di repo ini.
 - **3 DAG Airflow (batch, curation, mart) tidak ter-chain otomatis** — user harus trigger manual berurutan; tidak ada `TriggerDagRunOperator` atau dataset-based scheduling.
 - **Tidak ada quality-check otomatis untuk streaming staging** (valid vs rejected count) — harus dicek manual (§11).
-- **`delete_existing_month_data()` di `load_staging.py` menangkap exception secara luas** — jika DELETE gagal karena sebab selain "tabel belum ada" (permission, quota, dll), proses tetap lanjut ke `WRITE_APPEND`, berisiko menumpuk data lama+baru untuk periode yang sama tanpa error yang terlihat jelas.
-- **Ditemukan selisih kecil (3 baris) pada row count curated batch April** antar dua run live berbeda hari (44.041 vs 44.044) padahal staging source-nya identik (44.235 baris di kedua run) — belum bisa dijelaskan pasti dari kode, direkomendasikan verifikasi manual (duplicate `event_id` check).
-- **Kemungkinan tabel curated lama/orphan** (`green_tripdata_curated_batch`) masih tersisa di BigQuery dari sebelum `.env` diperbaiki — tidak dipakai kode manapun sekarang, sebaiknya dibersihkan manual jika sudah dikonfirmasi tidak diperlukan.
 - **`sql/merge_batch.sql` dan `analytics/batch_vs_stream.sql`** adalah dead code (tidak dipanggil dari Python manapun) — dibiarkan sebagaimana adanya, belum dibersihkan.
 - **Tidak ada automated end-to-end test** — validasi live sejauh ini berbasis log manual, bukan test suite yang bisa dijalankan ulang otomatis.
 
@@ -258,27 +255,3 @@ Capstone03/
 └── README.MD
 ```
 
-## 14. Final Requirement Checklist
-
-| Requirement | Implementation | Status |
-|---|---|---|
-| Ingestion (GCS raw) | `download_to_gcs.py`, idempotent | PASS |
-| Streaming publisher | `publisher.py`, event_id deterministic, EOS terkirim | PARTIAL — tidak ada log live untuk verifikasi langsung |
-| Pub/Sub | REST publish + `ReadFromPubSub` | PARTIAL — wiring benar, volume tidak terverifikasi langsung |
-| Beam/transform | `streaming_pipeline.py`, pure functions teruji 36 test | PARTIAL — wiring DoFn/pipeline tidak diuji otomatis |
-| Schema validation | JSON Schema draft-07 | PASS |
-| Mandatory fields | `required[]` + domain checks | PASS |
-| Invalid value handling | reject negative/invalid values | PASS |
-| Duplicate handling | deterministic `event_id` + `ROW_NUMBER` dedup | PARTIAL — desain solid, selisih 3 baris live belum terjelaskan |
-| Rejected/dead-letter handling | `staging_stream_rejected` table | PARTIAL — routing benar, count live belum terverifikasi |
-| Metadata event_id/event_time/ingestion_time | ada di schema, staging, curated | PASS |
-| Staging (batch + streaming) | dua tabel terpisah, terisi | PASS |
-| Curation | MERGE UNION ALL, live sukses | PASS |
-| Batch + streaming integrasi di curated | `data_source` column, UNION ALL | PASS |
-| Parameter year/month | Airflow `Param` di curation_dag | PASS |
-| Data mart | 4 tabel, live-confirmed | PASS |
-| Data quality checks | staging/curated/mart ada; streaming staging tidak ada | PARTIAL |
-| Partitioning | curated, staging_stream, mart_daily_revenue | PASS |
-| Clustering | curated + 3 tabel mart | PASS |
-| Orchestration | 3 DAG batch/curation/mart, tidak auto-chained; streaming di luar Airflow | PARTIAL |
-| Testing | 100/100 offline pass; tidak ada automated E2E test | PARTIAL |
