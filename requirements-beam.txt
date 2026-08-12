@@ -1,0 +1,16 @@
+# Dependencies for the .venv-beam environment (Python 3.12), used ONLY to run
+# dags/scripts/streaming_pipeline.py's run_pipeline()/main() -- i.e. actually
+# connecting to Pub/Sub and BigQuery via DirectRunner (and later Dataflow).
+#
+# This is intentionally a SEPARATE requirements file from requirements.txt
+# (which belongs to .venv / Python 3.14, used for the batch pipeline and for
+# running tests/test_streaming_pipeline.py offline -- that file only needs
+# jsonschema + python-dotenv, both already present in requirements.txt).
+#
+# Setup (already done by user for .venv-beam, kept here for reproducibility):
+#   python3.12 -m venv .venv-beam
+#   source .venv-beam/bin/activate
+#   pip install -r requirements-beam.txt
+apache-beam[gcp]==2.71.0
+jsonschema==4.21.1
+python-dotenv>=1.0.0,<2.0.0

@@ -1,0 +1,10 @@
+.env
+keys/
+*.json
+__pycache__/
+.venv/
+.venv-beam/
+airflow.db
+logs/
+data/
+.DS_Store

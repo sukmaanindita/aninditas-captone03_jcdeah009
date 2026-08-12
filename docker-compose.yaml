@@ -1,0 +1,23 @@
+services:
+  airflow:
+    image: apache/airflow:2.7.1
+    restart: always
+    env_file:
+      - .env
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/gcp-sa.json
+      PYTHONPATH: /opt/airflow:/opt/airflow/dags:/opt/airflow/batch
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/db/airflow.db
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./batch:/opt/airflow/batch
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./keys:/opt/airflow/keys:ro
+      - ./airflow_db:/opt/airflow/db
+      - ./sql:/opt/airflow/sql
+    command: airflow standalone
+    ports:
+      - "8080:8080"
